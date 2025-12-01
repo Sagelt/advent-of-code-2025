@@ -150,5 +150,3 @@ if __name__ == '__main__':
         dial.turn(line)
 
   print(dial.zero_count)
-
-  
