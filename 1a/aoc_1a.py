@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 class ElfSafeDial(object):
 
@@ -134,4 +135,20 @@ class TestElfSafeDial(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+
+  # If no file name is provided, unit test and exit
+  if len(sys.argv) == 1:
+    unittest.main()
+    sys.exit()
+
+  # At this point we have a file to parse
+  filename = sys.argv[1]
+  dial = ElfSafeDial()
+
+  with open(filename) as file:
+    while line := file.readline():
+        dial.turn(line)
+
+  print(dial.zero_count)
+
+  
