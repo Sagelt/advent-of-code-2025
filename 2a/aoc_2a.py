@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 def is_invalid(product_id: str) -> bool:
   id_length = len(product_id)
@@ -25,7 +26,21 @@ class TestValidProductIds(unittest.TestCase):
     self.assertEqual(is_invalid("99"), True)
     self.assertEqual(is_invalid("1010"), True)
     self.assertEqual(is_invalid("1188511885"), True)
-    
+
 
 if __name__ == '__main__':
-  unittest.main()
+  # If no file name is provided, unit test and exit
+  if len(sys.argv) == 1:
+    unittest.main()
+    sys.exit()
+
+  # At this point we have a file to parse
+  total = 0
+  filename = sys.argv[1]
+  raw_ranges = open(filename).readline()
+  for id_range in raw_ranges.split(","):
+    id_range_ends = id_range.split("-")
+    for product_id in range(int(id_range_ends[0]), int(id_range_ends[1])+1):
+      if is_invalid(str(product_id)):
+        total += product_id
+  print(total)
