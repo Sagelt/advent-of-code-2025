@@ -32,3 +32,10 @@ if __name__ == '__main__':
   if len(sys.argv) == 1:
     unittest.main()
     sys.exit()
+
+  # At this point we have a file to parse
+  total = 0
+  filename = sys.argv[1]
+  for battery_array in open(filename).readlines():
+    total += highest_joltage(battery_array[:-1])
+  print(total)
