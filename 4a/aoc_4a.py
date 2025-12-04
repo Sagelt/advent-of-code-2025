@@ -21,8 +21,6 @@ class WrappingPaperFloor(object):
       for x in range(0, len(self.__floor__[y])):
         if self.__floor__[y][x] == 1:
           total += self.can_be_moved(x, y)
-        else:
-          print(".", end="")
     return total
 
   def can_be_moved(self, x: int, y: int) -> int:
@@ -80,8 +78,6 @@ if __name__ == '__main__':
     sys.exit()
 
   # At this point we have a file to parse
-  total = 0
   filename = sys.argv[1]
-  for battery_array in open(filename).readlines():
-    total += highest_joltage(battery_array[:-1], 12)
-  print(total)
+  floor = WrappingPaperFloor(open(filename).readlines())
+  print(floor.count_movable_paper())
