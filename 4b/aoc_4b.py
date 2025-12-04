@@ -115,4 +115,4 @@ if __name__ == '__main__':
   # At this point we have a file to parse
   filename = sys.argv[1]
   floor = WrappingPaperFloor(open(filename).readlines())
-  print(floor.count_movable_paper())
+  print(floor.move_all_paper())
