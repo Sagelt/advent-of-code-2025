@@ -39,3 +39,23 @@ if __name__ == '__main__':
 
   # At this point we have a file to parse
   filename = sys.argv[1]
+  ranges = []
+  ingredients = []
+  for line in open(filename).readlines():
+    if "-" in line:
+      ends = line[:-1].split("-")
+      ranges.append((int(ends[0]), int(ends[1])))
+    elif line == "\n":
+      continue
+    else:
+      ingredients.append(int(line[:-1]))
+
+  db = IngredientDatabase(ranges)
+  count = 0
+  for ingredient in ingredients:
+    if db.is_fresh(ingredient):
+      count += 1
+
+  print(count)
+
+
