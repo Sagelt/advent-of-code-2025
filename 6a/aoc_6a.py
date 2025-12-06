@@ -45,12 +45,7 @@ if __name__ == '__main__':
 
   # At this point we have a file to parse
   filename = sys.argv[1]
-  ranges = []
-  for line in open(filename).readlines():
-    if "-" in line:
-      ends = line[:-1].split("-")
-      ranges.append((int(ends[0]), int(ends[1])))
-
-  print(count_in_ranges(ranges))
+  lines = open(filename).readlines()
+  print(build_math_problems_and_solve(lines))
 
 
