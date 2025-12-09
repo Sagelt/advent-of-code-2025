@@ -5,22 +5,21 @@ def count_tachyon_manifold_paths(lines: [str]) -> int:
   start_point = lines[0].find("S")
   if start_point == -1:
     raise ValueError("No start point in first line")
+  beam_locations = {start_point: 1}
 
-  return trace_paths(lines[1:], start_point)
+  for line in lines[1:-1]:
+    next_beam_locations = dict()
+    for location in beam_locations.keys():
+      if line[location] == "^":
+        if location > 0:
+          next_beam_locations[location-1] = next_beam_locations.get(location-1, 0) + beam_locations.get(location)
+        if location < len(line)-1:
+          next_beam_locations[location+1] = next_beam_locations.get(location+1, 0) + beam_locations.get(location)
+      else:
+        next_beam_locations[location] = next_beam_locations.get(location, 0) + beam_locations.get(location)
+    beam_locations = next_beam_locations
 
-def trace_paths(lines: [str], current_column: int) -> int:
-  if len(lines) == 1:
-    return 1
-
-  if lines[0][current_column] == "^":
-    paths = 0
-    if current_column > 0:
-      paths += trace_paths(lines[1:], current_column - 1)
-    if current_column < len(lines[0]) - 1:
-      paths += trace_paths(lines[1:], current_column + 1)
-    return paths
-  
-  return trace_paths(lines[1:], current_column)
+  return sum(beam_locations.values())
 
 class TestTachyonManifoldSplits(unittest.TestCase):
 
