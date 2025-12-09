@@ -99,6 +99,6 @@ if __name__ == '__main__':
   # At this point we have a file to parse
   filename = sys.argv[1]
   lines = open(filename).readlines()
-  print(count_tachyon_manifold_paths(lines))
+  print(build_circuits_using_smallest_pairs(lines, 1000))
 
 
