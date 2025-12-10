@@ -1,0 +1,133 @@
+import unittest
+import sys
+from itertools import combinations
+import operator
+from functools import reduce
+import math
+
+def build_circuits_using_smallest_pairs(lines: [str]) -> int:
+  all_boxes = parse_coordinates(lines)
+  all_pairs_sorted = sorted(
+    build_all_possible_connections(lines).items(), key=lambda item: item[1])
+  circuits = []
+  last_pair_added = None
+  for pair in [i[0] for i in all_pairs_sorted]:
+    print("Processing %s" % str(pair))
+    found_in_circuits = []
+    no_action_needed = False
+    for circuit in circuits:
+      if pair[0] in circuit and pair[1] in circuit:
+        print("  Already in the same circuit.")
+        no_action_needed = True
+      elif pair[0] in circuit or pair[1] in circuit:
+        print("  Found in circuit")
+        found_in_circuits.append(circuit)
+        last_pair_added = pair
+
+    if no_action_needed:
+      continue
+    elif len(found_in_circuits) > 2:
+      raise ValueError("Found more then two circuits")
+    elif len(found_in_circuits) == 2:
+      print("  Merging circuits")
+      new_circuit = set()
+      for circuit in found_in_circuits:
+        new_circuit |= circuit
+        circuits.remove(circuit)
+        print(new_circuit)
+
+      circuits.append(new_circuit)
+    elif len(found_in_circuits) == 1:
+      expected_length = len(found_in_circuits[0])+1
+      found_in_circuits[0].add(pair[0])
+      found_in_circuits[0].add(pair[1])
+      if len(found_in_circuits[0]) != expected_length:
+        raise ValueError("Expected circuit to be of size %d, got %d" % (expected_length, len(found_in_circuits[0])))
+      print("  Extended circuit")
+    else:
+      new_circuit = set(pair)
+      print("  Creating new circuit")
+      circuits.append(new_circuit)
+    for circuit in circuits:
+      assert_circuit_valid(circuit)
+    print("  Circuits: %d, Unique boxes: %d, Lines: %d" % (len(circuits), count_unique_boxes(circuits[0]), len(lines)))
+    if len(circuits) == 1:
+      print("  Diff: %s" % str(unique_boxes(circuits[0]) ^ set(all_boxes)))
+    if len(circuits) == 1 and count_unique_boxes(circuits[0]) == len(all_boxes):
+      break
+  
+  return last_pair_added[0][0] * last_pair_added[1][0]
+
+def assert_circuit_valid(circuit):
+  for box in circuit:
+    if len(box) != 3:
+      raise ValueError("Invalid circuit: %s" % circuit)
+
+def unique_boxes(circuit):
+  boxes = set()
+  for connection in circuit:
+    boxes.add(connection[0])
+    boxes.add(connection[1])
+  return boxes
+
+def count_unique_boxes(circuit) -> int:
+  return len(unique_boxes(circuit))
+
+
+def build_all_possible_connections(lines: [str]):
+  boxes = parse_coordinates(lines)
+  result = dict()
+  for pair in combinations(boxes, 2):
+    result[pair] = distance_in_3space(pair[0], pair[1])
+  return result
+
+def parse_coordinates(lines: [str]) -> [(int, int, int)]:
+  result = []
+  for line in lines:
+    line = line[:-1].strip()
+    numbers = line.split(",")
+    result.append((int(numbers[0]), int(numbers[1]), int(numbers[2])))
+  return result
+
+def distance_in_3space(a, b):
+  return math.sqrt(((a[0]-b[0])**2) + ((a[1]-b[1])**2) + ((a[2]-b[2])**2))
+
+class SmallestCircuitFinder(unittest.TestCase):
+
+  def test_sample_case(self):
+    sample_boxes = [
+      "162,817,812\n",
+      "57,618,57\n",
+      "906,360,560\n",
+      "592,479,940\n",
+      "352,342,300\n",
+      "466,668,158\n",
+      "542,29,236\n",
+      "431,825,988\n",
+      "739,650,466\n",
+      "52,470,668\n",
+      "216,146,977\n",
+      "819,987,18\n",
+      "117,168,530\n",
+      "805,96,715\n",
+      "346,949,466\n",
+      "970,615,88\n",
+      "941,993,340\n",
+      "862,61,35\n",
+      "984,92,344\n",
+      "425,690,689\n",
+    ]
+    self.assertEqual(build_circuits_using_smallest_pairs(sample_boxes), 25272)
+
+if __name__ == '__main__':
+  # If no file name is provided, unit test and exit
+  if len(sys.argv) == 1:
+    unittest.main()
+    sys.exit()
+
+  # At this point we have a file to parse
+  filename = sys.argv[1]
+  lines = open(filename).readlines()
+  print(build_circuits_using_smallest_pairs(lines))
+
+
