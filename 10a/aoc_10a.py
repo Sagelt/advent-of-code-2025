@@ -61,3 +61,11 @@ if __name__ == '__main__':
   if len(sys.argv) == 1:
     unittest.main()
     sys.exit()
+
+  # At this point we have a file to parse
+  filename = sys.argv[1]
+  lines = open(filename).readlines()
+  presses = 0
+  for line in lines:
+  	presses += find_fewest_button_presses(line[:-1])
+  print(presses)
