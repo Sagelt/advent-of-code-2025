@@ -1,6 +1,21 @@
 import unittest
 import sys
 
+class NodeInfo(object):
+
+	def __init__(self):
+		self.paths_to_out = 0
+		self.paths_to_dac = 0
+		self.paths_to_fft = 0
+		self.paths_to_all = 0
+
+	def __str__(self):
+		return ",".join([
+			str(self.paths_to_out),
+			str(self.paths_to_dac),
+			str(self.paths_to_fft),
+			str(self.paths_to_all),
+			])
 
 class ElfServer(object):
 
@@ -12,25 +27,6 @@ class ElfServer(object):
 			(origin, destinations) = line[:-1].split(":")
 			for destination in destinations.strip().split():
 				self.add_connection(origin, destination)
-
-		self._can_reach_dac = self._find_nodes_that_can_reach("dac")
-		self._can_reach_fft = self._find_nodes_that_can_reach("fft")
-		self._can_reach_out = self._find_nodes_that_can_reach("out")
-		
-
-	def _find_nodes_that_can_reach(self, target):
-		print("Findinf nodes that can reach %s" % target)
-		can_reach_out = set()
-		nodes_to_visit = [target]
-		while len(nodes_to_visit) > 0:
-			node = nodes_to_visit.pop()
-			print("%s can reach %s" % (node, target))
-			can_reach_out.add(node)
-			for next_node in self._backwards_connections[node]:
-				if next_node not in can_reach_out:
-					nodes_to_visit.append(next_node)
-
-		return can_reach_out
 
 
 	def add_connection(self, origin, destination):
@@ -49,23 +45,48 @@ class ElfServer(object):
 		self._backwards_connections[destination].add(origin)
 
 	def count_all_paths_containing_dac_and_fft(self):
-		print("Finding dac paths")
-		paths_dac = self._extend_paths_to([tuple(["svr"])], "dac", ["fft", "out"], self._can_reach_dac)
-		print("Finding dac->fft paths")
-		paths_dac_fft = self._extend_paths_to(list(paths_dac), "fft", ["out"], self._can_reach_fft)
+		node_info = dict()
+		node_info["out"] = NodeInfo()
+		node_info["out"].paths_to_out = 1
+		nodes_to_visit = ["out"]
+		visited = set()
+
+		while len(nodes_to_visit) > 0:
+			# print(nodes_to_visit)
+			node = nodes_to_visit.pop(0)
+			all_children_visited = True
+			for child in self._forward_connections[node]:
+				if child not in visited:
+					all_children_visited = False
+			if not all_children_visited:
+				nodes_to_visit.append(node)
+				continue
 
 
-		print("Finding fft paths")
-		paths_fft = self._extend_paths_to([tuple(["svr"])], "fft", ["dac", "out"], self._can_reach_fft)
-		print("Finding fft->dac paths")
-		paths_fft_dac = self._extend_paths_to(list(paths_fft), "dac", ["out"], self._can_reach_dac)
+			visited.add(node)
+			info = node_info[node]
+			if node == "dac":
+				info.paths_to_all = info.paths_to_fft
+				info.paths_to_dac = info.paths_to_out
+			elif node == "fft":
+				info.paths_to_all = info.paths_to_dac
+				info.paths_to_fft = info.paths_to_out
 
-		base_paths = paths_dac_fft ^ paths_fft_dac
 
-		print("Extending paths to out")
-		exit_paths = self._extend_paths_to(list(base_paths), "out", [], self._can_reach_out)
+			print("Visiting %s, info: %s" % (node, info))
+			for next_node in self._backwards_connections[node]:
+				if next_node not in node_info.keys():
+					node_info[next_node] = NodeInfo()
+				next_info = node_info[next_node]
+				next_info.paths_to_out += info.paths_to_out
+				next_info.paths_to_dac += info.paths_to_dac
+				next_info.paths_to_fft += info.paths_to_fft
+				next_info.paths_to_all += info.paths_to_all
+				if next_node not in nodes_to_visit and next_node not in visited:
+					nodes_to_visit.append(next_node)
 
-		return len(exit_paths)
+		
+		return node_info["svr"].paths_to_all
 
 	def _extend_paths_to(self, current_paths, target, avoid, possible_nodes):
 		pending_paths = list(current_paths)
